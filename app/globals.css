@@ -7,6 +7,7 @@ body {
 }
 
 @layer utilities {
+  /* Custom utility class for text balance */
   .text-balance {
     text-wrap: balance;
   }
@@ -40,6 +41,8 @@ body {
     --chart-5: 27 87% 67%;
     --radius: 0.5rem;
   }
+
+  /* Dark mode overrides */
   .dark {
     --background: 240 10% 3.9%;
     --foreground: 0 0% 98%;
@@ -69,10 +72,30 @@ body {
 }
 
 @layer base {
-  * {
-    @apply border-border;
-  }
+  /* Global body styles */
   body {
-    @apply bg-background text-foreground;
+    @apply bg-[var(--background)] text-[var(--foreground)]; /* Corrected application */
   }
+
+  /* Apply default border styling only where necessary */
+  * {
+    /* Reset border to avoid global black borders */
+    border: none;
+  }
+}
+
+@layer components {
+  /* Removed the border-border class and custom border */
+  .box {
+    @apply bg-[var(--box-bg)] text-white rounded-lg shadow p-4;
+  }
+}
+
+/* Gradient background styling */
+body {
+  @apply bg-gradient-to-b from-gray-800 to-gray-600 text-white;
+}
+
+@layer components {
+  /* Remove global border application */
 }
