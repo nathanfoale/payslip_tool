@@ -1,3 +1,5 @@
+// components/payslip-planner.tsx
+
 import {
   BanknoteIcon,
   WalletIcon,
@@ -54,14 +56,10 @@ import {
   CartesianGrid,
 } from 'recharts';
 
-
+import { ValueBox } from '@/components/value-box'; // Only import, no redeclaration
 
 // Define DayOfWeek type
 type DayOfWeek = 'Saturday' | 'Sunday' | 'Monday' | 'Tuesday' | 'Wednesday' | 'Thursday' | 'Friday';
-
-
-
-// ESPP Historical Data
 
 const esppData = [
   {
@@ -213,6 +211,7 @@ const esppData = [
   },
 ];
 
+
 // Constants and Types
 const daysOfWeek: DayOfWeek[] = [
   'Saturday',
@@ -277,45 +276,6 @@ function calculateTax(
   const taxPerPeriod = tax / periodsPerYear;
   return { taxPerPeriod, annualTax: tax };
 }
-
-// Define a mapping from color names to Tailwind CSS classes for icon colors
-const colorClasses: Record<string, { text: string }> = {
-  green: {
-    text: 'text-green-500',
-  },
-  blue: {
-    text: 'text-blue-500',
-  },
-  purple: {
-    text: 'text-purple-500',
-  },
-  yellow: {
-    text: 'text-yellow-500',
-  },
-  // Add more colors as needed
-};
-
-export function ValueBox({ value, subtitle, icon: Icon, color }: ValueBoxProps) {
-  // Get the corresponding text color class or default to gray
-  const classes = colorClasses[color] || {
-    text: 'text-gray-500',
-  };
-
-
-
-  return (
-    <div className="p-4 rounded-lg shadow-md bg-gray-700"> {/* Fixed background */}
-      <div className="flex items-center">
-        <Icon className={`${classes.text} w-6 h-6 mr-3`} /> {/* Dynamic icon color */}
-        <div>
-          <p className="text-sm font-semibold">{subtitle}</p>
-          <p className="text-lg font-bold">{value}</p>
-        </div>
-      </div>
-    </div>
-  );
-}
-
 
 function calculateShiftPay(
   day: DayOfWeek,
@@ -475,6 +435,24 @@ const renderCustomizedLabel = ({
   );
 };
 
+// Define fixed colors for charts
+const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042'];
+const HOURS_WORKED_COLOR = '#8884d8'; // Blue
+const SALARY_EARNED_COLOR = '#82ca9d'; // Green
+
+// Process ESPP data to include cumulativeContribution and investmentValue
+const esppChartData = esppData.map((item, index) => {
+  const cumulativeContribution = esppData
+    .slice(0, index + 1)
+    .reduce((acc, curr) => acc + curr.Purchase_Price_b, 0);
+  const investmentValue = item.Period_Ending_Value_a;
+  return {
+    Ending_Date: item.Ending_Date,
+    cumulativeContribution,
+    investmentValue
+  };
+});
+
 // Payslip Planner Component
 export function PayslipPlannerComponent() {
   const [schedule, setSchedule] = useState<Record<DayOfWeek, WorkDay>>(
@@ -525,6 +503,7 @@ export function PayslipPlannerComponent() {
 
     // Log the breakdown data for debugging
     console.log('Breakdown Data:', weeklyData.breakdown);
+    console.log('Day Summary:', weeklyData.daySummary); // Added for debugging
 
     const periodMultiplier = summaryPeriod === 'Weekly' ? 1 : 2;
     const incomePerPeriod = weeklyData.totalIncome * periodMultiplier;
@@ -568,25 +547,6 @@ export function PayslipPlannerComponent() {
       amount: averageHourlyRate
     },
   ];
-
-  const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042'];
-
-  // Define fixed colors for bars
-  const HOURS_WORKED_COLOR = '#8884d8'; // Blue
-  const SALARY_EARNED_COLOR = '#82ca9d'; // Green
-
-  // Process ESPP data to include cumulativeContribution and investmentValue
-  const esppChartData = esppData.map((item, index) => {
-    const cumulativeContribution = esppData
-      .slice(0, index + 1)
-      .reduce((acc, curr) => acc + curr.Purchase_Price_b, 0);
-    const investmentValue = item.Period_Ending_Value_a;
-    return {
-      Ending_Date: item.Ending_Date,
-      cumulativeContribution,
-      investmentValue
-    };
-  });
 
   return (
     <div className="bg-gradient-to-b from-gray-800 to-gray-600 text-white min-h-screen p-4">
