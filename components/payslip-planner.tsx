@@ -28,7 +28,6 @@ import {
   TabsList,
   TabsTrigger
 } from '@/components/ui/tabs';
-import { ValueBox } from './value-box';
 import {
   Table,
   TableBody,
@@ -39,6 +38,8 @@ import {
 } from '@/components/ui/table';
 import {
   PieChart,
+  LineChart,
+  Line,
   Pie,
   Cell,
   ResponsiveContainer,
@@ -51,10 +52,169 @@ import {
   XAxis,
   YAxis,
   CartesianGrid,
-  Line,
 } from 'recharts';
 
-const daysOfWeek = [
+
+
+// Define DayOfWeek type
+type DayOfWeek = 'Saturday' | 'Sunday' | 'Monday' | 'Tuesday' | 'Wednesday' | 'Thursday' | 'Friday';
+
+
+
+// ESPP Historical Data
+
+const esppData = [
+  {
+    Beginning_Date: "2014-02-01",
+    Ending_Date: "2014-07-31",
+    Period_Beginning_Value: 17.91,
+    Period_Ending_Value_a: 23.9,
+    Purchase_Price_b: 15.23,
+  },
+  {
+    Beginning_Date: "2014-08-01",
+    Ending_Date: "2015-01-31",
+    Period_Beginning_Value: 24.03,
+    Period_Ending_Value_a: 29.29,
+    Purchase_Price_b: 20.43,
+  },
+  {
+    Beginning_Date: "2015-02-01",
+    Ending_Date: "2015-07-31",
+    Period_Beginning_Value: 29.66,
+    Period_Ending_Value_a: 30.33,
+    Purchase_Price_b: 25.21,
+  },
+  {
+    Beginning_Date: "2015-08-01",
+    Ending_Date: "2016-01-31",
+    Period_Beginning_Value: 29.61,
+    Period_Ending_Value_a: 24.34,
+    Purchase_Price_b: 20.69,
+  },
+  {
+    Beginning_Date: "2016-02-01",
+    Ending_Date: "2016-07-31",
+    Period_Beginning_Value: 24.11,
+    Period_Ending_Value_a: 26.05,
+    Purchase_Price_b: 20.49,
+  },
+  {
+    Beginning_Date: "2016-08-01",
+    Ending_Date: "2017-01-31",
+    Period_Beginning_Value: 26.51,
+    Period_Ending_Value_a: 30.34,
+    Purchase_Price_b: 22.54,
+  },
+  {
+    Beginning_Date: "2017-02-01",
+    Ending_Date: "2017-07-31",
+    Period_Beginning_Value: 32.19,
+    Period_Ending_Value_a: 37.18,
+    Purchase_Price_b: 27.36,
+  },
+  {
+    Beginning_Date: "2017-08-01",
+    Ending_Date: "2018-01-31",
+    Period_Beginning_Value: 37.51,
+    Period_Ending_Value_a: 41.86,
+    Purchase_Price_b: 31.89,
+  },
+  {
+    Beginning_Date: "2018-02-01",
+    Ending_Date: "2018-07-31",
+    Period_Beginning_Value: 41.95,
+    Period_Ending_Value_a: 47.57,
+    Purchase_Price_b: 35.65,
+  },
+  {
+    Beginning_Date: "2018-08-01",
+    Ending_Date: "2019-01-31",
+    Period_Beginning_Value: 50.38,
+    Period_Ending_Value_a: 41.61,
+    Purchase_Price_b: 35.37,
+  },
+  {
+    Beginning_Date: "2019-02-01",
+    Ending_Date: "2019-07-31",
+    Period_Beginning_Value: 41.63,
+    Period_Ending_Value_a: 53.26,
+    Purchase_Price_b: 35.39,
+  },
+  {
+    Beginning_Date: "2019-08-01",
+    Ending_Date: "2020-01-31",
+    Period_Beginning_Value: 52.11,
+    Period_Ending_Value_a: 77.38,
+    Purchase_Price_b: 44.29,
+  },
+  {
+    Beginning_Date: "2020-02-01",
+    Ending_Date: "2020-07-31",
+    Period_Beginning_Value: 77.17,
+    Period_Ending_Value_a: 106.26,
+    Purchase_Price_b: 65.59,
+  },
+  {
+    Beginning_Date: "2020-08-01",
+    Ending_Date: "2021-01-31",
+    Period_Beginning_Value: 108.94,
+    Period_Ending_Value_a: 131.96,
+    Purchase_Price_b: 92.6,
+  },
+  {
+    Beginning_Date: "2021-02-01",
+    Ending_Date: "2021-07-31",
+    Period_Beginning_Value: 134.14,
+    Period_Ending_Value_a: 145.86,
+    Purchase_Price_b: 114.02,
+  },
+  {
+    Beginning_Date: "2021-08-01",
+    Ending_Date: "2022-01-31",
+    Period_Beginning_Value: 145.52,
+    Period_Ending_Value_a: 174.78,
+    Purchase_Price_b: 123.69,
+  },
+  {
+    Beginning_Date: "2022-02-01",
+    Ending_Date: "2022-07-31",
+    Period_Beginning_Value: 174.61,
+    Period_Ending_Value_a: 162.51,
+    Purchase_Price_b: 138.13,
+  },
+  {
+    Beginning_Date: "2022-08-01",
+    Ending_Date: "2023-01-31",
+    Period_Beginning_Value: 161.51,
+    Period_Ending_Value_a: 144.29,
+    Purchase_Price_b: 122.65,
+  },
+  {
+    Beginning_Date: "2023-02-01",
+    Ending_Date: "2023-07-31",
+    Period_Beginning_Value: 145.43,
+    Period_Ending_Value_a: 196.45,
+    Purchase_Price_b: 123.62,
+  },
+  {
+    Beginning_Date: "2023-08-01",
+    Ending_Date: "2024-01-31",
+    Period_Beginning_Value: 195.6,
+    Period_Ending_Value_a: 184.4,
+    Purchase_Price_b: 156.74,
+  },
+  {
+    Beginning_Date: "2024-02-01",
+    Ending_Date: "2024-07-31",
+    Period_Beginning_Value: 186.86,
+    Period_Ending_Value_a: 222.08,
+    Purchase_Price_b: 158.83,
+  },
+];
+
+// Constants and Types
+const daysOfWeek: DayOfWeek[] = [
   'Saturday',
   'Sunday',
   'Monday',
@@ -82,11 +242,12 @@ const taxThresholds = [
   { threshold: 0, rate: 0 },
   { threshold: 18200, rate: 0.16 },
   { threshold: 45000, rate: 0.30 },
-  { threshold: 135000, rate: 0.45 }, // Corrected rate for higher threshold
+  { threshold: 135000, rate: 0.45 },
 ];
 
 const laundryAllowance = 12.5;
 
+// Utility Functions
 function convertTime(time: string): number {
   const [hours, minutes] = time.split(':').map(Number);
   return hours + minutes / 60;
@@ -117,8 +278,47 @@ function calculateTax(
   return { taxPerPeriod, annualTax: tax };
 }
 
+// Define a mapping from color names to Tailwind CSS classes for icon colors
+const colorClasses: Record<string, { text: string }> = {
+  green: {
+    text: 'text-green-500',
+  },
+  blue: {
+    text: 'text-blue-500',
+  },
+  purple: {
+    text: 'text-purple-500',
+  },
+  yellow: {
+    text: 'text-yellow-500',
+  },
+  // Add more colors as needed
+};
+
+export function ValueBox({ value, subtitle, icon: Icon, color }: ValueBoxProps) {
+  // Get the corresponding text color class or default to gray
+  const classes = colorClasses[color] || {
+    text: 'text-gray-500',
+  };
+
+
+
+  return (
+    <div className="p-4 rounded-lg shadow-md bg-gray-700"> {/* Fixed background */}
+      <div className="flex items-center">
+        <Icon className={`${classes.text} w-6 h-6 mr-3`} /> {/* Dynamic icon color */}
+        <div>
+          <p className="text-sm font-semibold">{subtitle}</p>
+          <p className="text-lg font-bold">{value}</p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+
 function calculateShiftPay(
-  day: string,
+  day: DayOfWeek,
   startTime: number,
   endTime: number,
   baseRate: number,
@@ -197,35 +397,25 @@ function calculateShiftPay(
 }
 
 function calculateWeeklyIncome(
-  schedule: { day: string; start: number; end: number }[],
+  schedule: { day: DayOfWeek; start: number; end: number }[],
   baseRate: number,
   overtimeThreshold: number
-) {
+): {
+  totalIncome: number;
+  totalHours: number;
+  breakdown: { payType: string; hours: number; rate: number; income: number }[];
+  daySummary: { day: DayOfWeek; hours: number; salary: number }[];
+} {
   let totalIncome = 0;
   let totalHours = 0;
   let cumulativeHours = 0;
   const breakdown = [
     { payType: 'Base Pay', hours: 0, rate: baseRate, income: 0 },
-    {
-      payType: '125% Premium',
-      hours: 0,
-      rate: 1.25 * baseRate,
-      income: 0
-    },
-    {
-      payType: '150% Premium',
-      hours: 0,
-      rate: 1.5 * baseRate,
-      income: 0
-    },
-    {
-      payType: '200% Premium',
-      hours: 0,
-      rate: 2.0 * baseRate,
-      income: 0
-    },
+    { payType: '125% Premium', hours: 0, rate: 1.25 * baseRate, income: 0 },
+    { payType: '150% Premium', hours: 0, rate: 1.5 * baseRate, income: 0 },
+    { payType: '200% Premium', hours: 0, rate: 2.0 * baseRate, income: 0 },
   ];
-  const daySummary: { day: string; hours: number; salary: number }[] = [];
+  const daySummary: { day: DayOfWeek; hours: number; salary: number }[] = [];
 
   for (const { day, start, end } of schedule) {
     const shiftResult = calculateShiftPay(
@@ -246,15 +436,7 @@ function calculateWeeklyIncome(
       );
       if (breakdownIndex !== -1) {
         breakdown[breakdownIndex].hours += detail.hours;
-        breakdown[breakdownIndex].income +=
-          detail.hours * detail.rate;
-      } else {
-        breakdown.push({
-          payType: detail.payType,
-          hours: detail.hours,
-          rate: detail.rate,
-          income: detail.hours * detail.rate,
-        });
+        breakdown[breakdownIndex].income += detail.hours * detail.rate;
       }
     }
 
@@ -268,17 +450,17 @@ function calculateWeeklyIncome(
   return { totalIncome, totalHours, breakdown, daySummary };
 }
 
+// Custom Label for PieChart with Defensive Programming
 const renderCustomizedLabel = ({
   payload,
-  percent,
   x,
   y
 }: {
-  payload: { payType: string; income: number };
-  percent: number;
+  payload: { payType: string; income?: number };
   x: number;
   y: number;
 }) => {
+  const income = payload.income ?? 0; // Default to 0 if undefined
   return (
     <text
       x={x}
@@ -288,34 +470,30 @@ const renderCustomizedLabel = ({
       dominantBaseline="central"
       fontSize={12}
     >
-      {`${payload.payType}: $${payload.income.toFixed(2)}`}
+      {`${payload.payType}: $${income.toFixed(2)}`}
     </text>
   );
 };
 
+// Payslip Planner Component
 export function PayslipPlannerComponent() {
-  const [schedule, setSchedule] = useState<Record<string, WorkDay>>(
+  const [schedule, setSchedule] = useState<Record<DayOfWeek, WorkDay>>(
     Object.fromEntries(
       daysOfWeek.map((day) => [
         day,
         { isWorking: false, startTime: '09:00', endTime: '17:00' }
       ])
-    )
+    ) as Record<DayOfWeek, WorkDay>
   );
   const [baseRate, setBaseRate] = useState(30.33);
   const [bracket, setBracket] = useState('19');
   const [esppContribution, setEsppContribution] = useState(10);
-  const [summaryPeriod, setSummaryPeriod] = useState<
-    'Weekly' | 'Fortnightly'
-  >('Weekly');
-  const [incomeData, setIncomeData] = useState<
-    ReturnType<typeof calculateWeeklyIncome> | null
-  >(null);
-  const [taxData, setTaxData] = useState<
-    ReturnType<typeof calculateTax> | null
-  >(null);
+  const [summaryPeriod, setSummaryPeriod] = useState<'Weekly' | 'Fortnightly'>('Weekly');
+  const [incomeData, setIncomeData] = useState<ReturnType<typeof calculateWeeklyIncome> | null>(null);
+  const [taxData, setTaxData] = useState<ReturnType<typeof calculateTax> | null>(null);
+  const [activeTab, setActiveTab] = useState('schedule');
 
-  const handleToggleDay = (day: string) => {
+  const handleToggleDay = (day: DayOfWeek) => {
     setSchedule((prev) => ({
       ...prev,
       [day]: { ...prev[day], isWorking: !prev[day].isWorking }
@@ -323,7 +501,7 @@ export function PayslipPlannerComponent() {
   };
 
   const handleTimeChange = (
-    day: string,
+    day: DayOfWeek,
     type: 'startTime' | 'endTime',
     value: string
   ) => {
@@ -337,41 +515,32 @@ export function PayslipPlannerComponent() {
     const workSchedule = Object.entries(schedule)
       .filter(([_, { isWorking }]) => isWorking)
       .map(([day, { startTime, endTime }]) => ({
-        day,
+        day: day as DayOfWeek,
         start: convertTime(startTime),
         end: convertTime(endTime)
       }));
 
-    const weeklyData = calculateWeeklyIncome(
-      workSchedule,
-      baseRate,
-      Number(bracket)
-    );
+    const weeklyData = calculateWeeklyIncome(workSchedule, baseRate, Number(bracket));
     setIncomeData(weeklyData);
 
-    const periodMultiplier =
-      summaryPeriod === 'Weekly' ? 1 : 2;
+    // Log the breakdown data for debugging
+    console.log('Breakdown Data:', weeklyData.breakdown);
+
+    const periodMultiplier = summaryPeriod === 'Weekly' ? 1 : 2;
     const incomePerPeriod = weeklyData.totalIncome * periodMultiplier;
     const taxInfo = calculateTax(incomePerPeriod, summaryPeriod);
     setTaxData(taxInfo);
+
+    // Switch to results tab after calculation
+    setActiveTab('results');
   };
 
-  const grossIncome = incomeData
-    ? incomeData.totalIncome *
-      (summaryPeriod === 'Weekly' ? 1 : 2)
-    : 0;
-  const netIncome = taxData
-    ? grossIncome - taxData.taxPerPeriod
-    : 0;
+  const grossIncome = incomeData ? incomeData.totalIncome * (summaryPeriod === 'Weekly' ? 1 : 2) : 0;
+  const netIncome = taxData ? grossIncome - taxData.taxPerPeriod : 0;
   const esppContributionAmount = (esppContribution / 100) * netIncome;
-  const takeHomePay =
-    netIncome - esppContributionAmount + laundryAllowance;
-  const totalHours = incomeData
-    ? incomeData.totalHours *
-      (summaryPeriod === 'Weekly' ? 1 : 2)
-    : 0;
-  const averageHourlyRate =
-    totalHours > 0 ? grossIncome / totalHours : 0;
+  const takeHomePay = netIncome - esppContributionAmount + laundryAllowance;
+  const totalHours = incomeData ? incomeData.totalHours * (summaryPeriod === 'Weekly' ? 1 : 2) : 0;
+  const averageHourlyRate = totalHours > 0 ? grossIncome / totalHours : 0;
 
   const summaryData = [
     {
@@ -402,13 +571,40 @@ export function PayslipPlannerComponent() {
 
   const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042'];
 
+  // Define fixed colors for bars
+  const HOURS_WORKED_COLOR = '#8884d8'; // Blue
+  const SALARY_EARNED_COLOR = '#82ca9d'; // Green
+
+  // Process ESPP data to include cumulativeContribution and investmentValue
+  const esppChartData = esppData.map((item, index) => {
+    const cumulativeContribution = esppData
+      .slice(0, index + 1)
+      .reduce((acc, curr) => acc + curr.Purchase_Price_b, 0);
+    const investmentValue = item.Period_Ending_Value_a;
+    return {
+      Ending_Date: item.Ending_Date,
+      cumulativeContribution,
+      investmentValue
+    };
+  });
+
   return (
     <div className="bg-gradient-to-b from-gray-800 to-gray-600 text-white min-h-screen p-4">
       <h1 className="text-3xl font-bold mb-6">Payslip Planner</h1>
-      <Tabs defaultValue="schedule">
-        <TabsList>
-          <TabsTrigger value="schedule">Work Schedule</TabsTrigger>
-          <TabsTrigger value="results">Results</TabsTrigger>
+      <Tabs value={activeTab} onValueChange={setActiveTab}>
+        <TabsList className="bg-gray-700 p-1 rounded-lg space-x-2">
+          <TabsTrigger 
+            value="schedule" 
+            className="px-4 py-2 rounded-md data-[state=active]:bg-teal-500 data-[state=active]:text-white transition-all duration-200 hover:bg-gray-600"
+          >
+            Work Schedule
+          </TabsTrigger>
+          <TabsTrigger 
+            value="results"
+            className="px-4 py-2 rounded-md data-[state=active]:bg-teal-500 data-[state=active]:text-white transition-all duration-200 hover:bg-gray-600"
+          >
+            Results
+          </TabsTrigger>
         </TabsList>
         <TabsContent value="schedule">
           <div className="grid gap-6 md:grid-cols-2">
@@ -436,11 +632,9 @@ export function PayslipPlannerComponent() {
                     onValueChange={setBracket}
                   >
                     <SelectTrigger className="w-32 bg-gray-800 text-white border border-gray-700 rounded-md hover:bg-teal-500">
-
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent className="bg-gray-800 text-white">
-
                       <SelectItem value="19">15-19</SelectItem>
                       <SelectItem value="23">19-23</SelectItem>
                       <SelectItem value="27">23-27</SelectItem>
@@ -467,12 +661,10 @@ export function PayslipPlannerComponent() {
                     value={summaryPeriod}
                     onValueChange={(value: 'Weekly' | 'Fortnightly') => setSummaryPeriod(value)}
                   >
-                    <SelectTrigger className="w-32 bg-gray-800 text-white border border-gray-700 rounded-md hover:bg-teal-500"
->
+                    <SelectTrigger className="w-32 bg-gray-800 text-white border border-gray-700 rounded-md hover:bg-teal-500">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent className="bg-gray-800 text-white">
-
                       <SelectItem value="Weekly">Weekly</SelectItem>
                       <SelectItem value="Fortnightly">Fortnightly</SelectItem>
                     </SelectContent>
@@ -494,10 +686,16 @@ export function PayslipPlannerComponent() {
                       id={`${day}-toggle`}
                       checked={schedule[day].isWorking}
                       onCheckedChange={() => handleToggleDay(day)}
-                      className={`${
+                      className={`relative inline-flex h-6 w-11 items-center rounded-full ${
                         schedule[day].isWorking ? 'bg-teal-500' : 'bg-gray-500'
-                      } relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200`}
-                    />
+                      } transition-colors duration-200`}
+                    >
+                      <span
+                        className={`absolute left-1 h-4 w-4 transform rounded-full bg-white shadow-md transition-transform duration-200 ${
+                          schedule[day].isWorking ? 'translate-x-5' : 'translate-x-0'
+                        }`}
+                      />
+                    </Switch>
                     <Label htmlFor={`${day}-toggle`} className="w-24">
                       {day}
                     </Label>
@@ -508,28 +706,24 @@ export function PayslipPlannerComponent() {
                           onValueChange={(value) => handleTimeChange(day, 'startTime', value)}
                         >
                           <SelectTrigger className="w-32 bg-gray-800 text-white border border-gray-700 rounded-md hover:bg-teal-500">
-
                             <SelectValue placeholder="Start" />
                           </SelectTrigger>
                           <SelectContent className="bg-gray-800 text-white">
-
                             {timeOptions.map((time) => (
                               <SelectItem key={`${day}-start-${time}`} value={time}>
                                 {time}
                               </SelectItem>
                             ))}
-                          </SelectContent >
+                          </SelectContent>
                         </Select>
                         <Select
                           value={schedule[day].endTime}
                           onValueChange={(value) => handleTimeChange(day, 'endTime', value)}
                         >
                           <SelectTrigger className="w-32 bg-gray-800 text-white border border-gray-700 rounded-md hover:bg-teal-500">
-
                             <SelectValue placeholder="End" />
                           </SelectTrigger>
                           <SelectContent className="bg-gray-800 text-white">
-
                             {timeOptions.map((time) => (
                               <SelectItem key={`${day}-end-${time}`} value={time}>
                                 {time}
@@ -543,6 +737,7 @@ export function PayslipPlannerComponent() {
                 ))}
               </CardContent>
             </Card>
+
           </div>
           <Button
             className="mt-6 bg-teal-500 hover:bg-teal-600 transition-colors duration-200"
@@ -605,7 +800,7 @@ export function PayslipPlannerComponent() {
                   </Table>
                 </CardContent>
               </Card>
-
+             
               <div className="grid gap-6 md:grid-cols-2">
                 <Card className="bg-gray-700 text-white">
                   <CardHeader>
@@ -634,7 +829,6 @@ export function PayslipPlannerComponent() {
                     </Table>
                   </CardContent>
                 </Card>
-
                 <Card className="bg-gray-700 text-white">
                   <CardHeader>
                     <CardTitle>Income by Pay Type</CardTitle>
@@ -656,9 +850,7 @@ export function PayslipPlannerComponent() {
                             (entry, index) => (
                               <Cell
                                 key={`cell-${index}`}
-                                fill={
-                                  COLORS[index % COLORS.length]
-                                }
+                                fill={COLORS[index % COLORS.length]}
                               />
                             )
                           )}
@@ -674,7 +866,6 @@ export function PayslipPlannerComponent() {
                   </CardContent>
                 </Card>
               </div>
-
               <Card className="bg-gray-700 text-white">
                 <CardHeader>
                   <CardTitle>Day-by-Day Summary</CardTitle>
@@ -684,36 +875,71 @@ export function PayslipPlannerComponent() {
                     <BarChart data={incomeData.daySummary}>
                       <CartesianGrid strokeDasharray="3 3" />
                       <XAxis dataKey="day" />
+                      {/* Define Left Y-Axis for Hours */}
                       <YAxis
                         yAxisId="left"
                         orientation="left"
                         stroke="#8884d8"
+                        label={{
+                          value: 'Hours Worked',
+                          angle: -90,
+                          position: 'insideLeft'
+                        }}
                       />
+                      {/* Define Right Y-Axis for Salary */}
                       <YAxis
                         yAxisId="right"
                         orientation="right"
                         stroke="#82ca9d"
+                        label={{
+                          value: 'Salary Earned ($)',
+                          angle: 90,
+                          position: 'insideRight'
+                        }}
                       />
                       <Tooltip
-                        formatter={(value: number) =>
-                          `$${value.toFixed(2)}`
+                        formatter={(value: number, name: string) =>
+                          name === 'hours' ? `${value.toFixed(2)} hrs` : `$${value.toFixed(2)}`
                         }
                       />
                       <Legend />
-                      <Bar
-                        yAxisId="left"
-                        dataKey="hours"
-                        fill="#8884d8"
-                        name="Hours Worked"
+                      {/* Hours Worked Bar with Fixed Color */}
+                      <Bar yAxisId="left" dataKey="hours" name="Hours Worked" fill={HOURS_WORKED_COLOR}>
+                        {/* No need for individual Cell colors */}
+                      </Bar>
+                      {/* Salary Earned Bar with Fixed Color */}
+                      <Bar yAxisId="right" dataKey="salary" name="Salary Earned" fill={SALARY_EARNED_COLOR}>
+                        {/* No need for individual Cell colors */}
+                      </Bar>
+                    </BarChart>
+                  </ResponsiveContainer>
+                </CardContent>
+              </Card>
+              <Card className="bg-gray-700 text-white">
+                <CardHeader>
+                  <CardTitle>ESPP Investment Value vs. Contributions</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <ResponsiveContainer width="100%" height={300}>
+                    <LineChart data={esppChartData}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="Ending_Date" />
+                      <YAxis />
+                      <Tooltip formatter={(value: number) => `$${value.toFixed(2)}`} />
+                      <Legend />
+                      <Line
+                        type="monotone"
+                        dataKey="cumulativeContribution"
+                        stroke="#8884d8"
+                        name="Cumulative Contributions"
                       />
                       <Line
-                        yAxisId="right"
                         type="monotone"
-                        dataKey="salary"
+                        dataKey="investmentValue"
                         stroke="#82ca9d"
-                        name="Salary Earned"
+                        name="Investment Value"
                       />
-                    </BarChart>
+                    </LineChart>
                   </ResponsiveContainer>
                 </CardContent>
               </Card>
