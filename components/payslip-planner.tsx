@@ -6,7 +6,7 @@ import {
   PiggyBankIcon,
   ClockIcon
 } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import {
@@ -61,7 +61,23 @@ import { ValueBox } from '@/components/value-box'; // Only import, no redeclarat
 // Define DayOfWeek type
 type DayOfWeek = 'Saturday' | 'Sunday' | 'Monday' | 'Tuesday' | 'Wednesday' | 'Thursday' | 'Friday';
 
-const esppData = [
+type ESPPHistoricalData = {
+  Beginning_Date: string;
+  Ending_Date: string;
+  Period_Beginning_Value: number;
+  Period_Ending_Value_a: number;
+  Purchase_Price_b: number;
+};
+
+type ESPPCalculatedData = {
+  period: string;
+  contribution: number;
+  purchasePrice: number;
+  sharesPurchased: number;
+  investedValue: number;
+  nonInvestedValue: number;
+};
+const esppHistoricalData: ESPPHistoricalData[] = [
   {
     Beginning_Date: "2014-02-01",
     Ending_Date: "2014-07-31",
@@ -69,148 +85,149 @@ const esppData = [
     Period_Ending_Value_a: 23.9,
     Purchase_Price_b: 15.23,
   },
-  {
-    Beginning_Date: "2014-08-01",
-    Ending_Date: "2015-01-31",
-    Period_Beginning_Value: 24.03,
-    Period_Ending_Value_a: 29.29,
-    Purchase_Price_b: 20.43,
-  },
-  {
-    Beginning_Date: "2015-02-01",
-    Ending_Date: "2015-07-31",
-    Period_Beginning_Value: 29.66,
-    Period_Ending_Value_a: 30.33,
-    Purchase_Price_b: 25.21,
-  },
-  {
-    Beginning_Date: "2015-08-01",
-    Ending_Date: "2016-01-31",
-    Period_Beginning_Value: 29.61,
-    Period_Ending_Value_a: 24.34,
-    Purchase_Price_b: 20.69,
-  },
-  {
-    Beginning_Date: "2016-02-01",
-    Ending_Date: "2016-07-31",
-    Period_Beginning_Value: 24.11,
-    Period_Ending_Value_a: 26.05,
-    Purchase_Price_b: 20.49,
-  },
-  {
-    Beginning_Date: "2016-08-01",
-    Ending_Date: "2017-01-31",
-    Period_Beginning_Value: 26.51,
-    Period_Ending_Value_a: 30.34,
-    Purchase_Price_b: 22.54,
-  },
-  {
-    Beginning_Date: "2017-02-01",
-    Ending_Date: "2017-07-31",
-    Period_Beginning_Value: 32.19,
-    Period_Ending_Value_a: 37.18,
-    Purchase_Price_b: 27.36,
-  },
-  {
-    Beginning_Date: "2017-08-01",
-    Ending_Date: "2018-01-31",
-    Period_Beginning_Value: 37.51,
-    Period_Ending_Value_a: 41.86,
-    Purchase_Price_b: 31.89,
-  },
-  {
-    Beginning_Date: "2018-02-01",
-    Ending_Date: "2018-07-31",
-    Period_Beginning_Value: 41.95,
-    Period_Ending_Value_a: 47.57,
-    Purchase_Price_b: 35.65,
-  },
-  {
-    Beginning_Date: "2018-08-01",
-    Ending_Date: "2019-01-31",
-    Period_Beginning_Value: 50.38,
-    Period_Ending_Value_a: 41.61,
-    Purchase_Price_b: 35.37,
-  },
-  {
-    Beginning_Date: "2019-02-01",
-    Ending_Date: "2019-07-31",
-    Period_Beginning_Value: 41.63,
-    Period_Ending_Value_a: 53.26,
-    Purchase_Price_b: 35.39,
-  },
-  {
-    Beginning_Date: "2019-08-01",
-    Ending_Date: "2020-01-31",
-    Period_Beginning_Value: 52.11,
-    Period_Ending_Value_a: 77.38,
-    Purchase_Price_b: 44.29,
-  },
-  {
-    Beginning_Date: "2020-02-01",
-    Ending_Date: "2020-07-31",
-    Period_Beginning_Value: 77.17,
-    Period_Ending_Value_a: 106.26,
-    Purchase_Price_b: 65.59,
-  },
-  {
-    Beginning_Date: "2020-08-01",
-    Ending_Date: "2021-01-31",
-    Period_Beginning_Value: 108.94,
-    Period_Ending_Value_a: 131.96,
-    Purchase_Price_b: 92.6,
-  },
-  {
-    Beginning_Date: "2021-02-01",
-    Ending_Date: "2021-07-31",
-    Period_Beginning_Value: 134.14,
-    Period_Ending_Value_a: 145.86,
-    Purchase_Price_b: 114.02,
-  },
-  {
-    Beginning_Date: "2021-08-01",
-    Ending_Date: "2022-01-31",
-    Period_Beginning_Value: 145.52,
-    Period_Ending_Value_a: 174.78,
-    Purchase_Price_b: 123.69,
-  },
-  {
-    Beginning_Date: "2022-02-01",
-    Ending_Date: "2022-07-31",
-    Period_Beginning_Value: 174.61,
-    Period_Ending_Value_a: 162.51,
-    Purchase_Price_b: 138.13,
-  },
-  {
-    Beginning_Date: "2022-08-01",
-    Ending_Date: "2023-01-31",
-    Period_Beginning_Value: 161.51,
-    Period_Ending_Value_a: 144.29,
-    Purchase_Price_b: 122.65,
-  },
-  {
-    Beginning_Date: "2023-02-01",
-    Ending_Date: "2023-07-31",
-    Period_Beginning_Value: 145.43,
-    Period_Ending_Value_a: 196.45,
-    Purchase_Price_b: 123.62,
-  },
-  {
-    Beginning_Date: "2023-08-01",
-    Ending_Date: "2024-01-31",
-    Period_Beginning_Value: 195.6,
-    Period_Ending_Value_a: 184.4,
-    Purchase_Price_b: 156.74,
-  },
-  {
-    Beginning_Date: "2024-02-01",
-    Ending_Date: "2024-07-31",
-    Period_Beginning_Value: 186.86,
-    Period_Ending_Value_a: 222.08,
-    Purchase_Price_b: 158.83,
-  },
-];
-
+    {
+      Beginning_Date: "2014-08-01",
+      Ending_Date: "2015-01-31",
+      Period_Beginning_Value: 24.03,
+      Period_Ending_Value_a: 29.29,
+      Purchase_Price_b: 20.43,
+    },
+    {
+      Beginning_Date: "2015-02-01",
+      Ending_Date: "2015-07-31",
+      Period_Beginning_Value: 29.66,
+      Period_Ending_Value_a: 30.33,
+      Purchase_Price_b: 25.21,
+    },
+    {
+      Beginning_Date: "2015-08-01",
+      Ending_Date: "2016-01-31",
+      Period_Beginning_Value: 29.61,
+      Period_Ending_Value_a: 24.34,
+      Purchase_Price_b: 20.69,
+    },
+    {
+      Beginning_Date: "2016-02-01",
+      Ending_Date: "2016-07-31",
+      Period_Beginning_Value: 24.11,
+      Period_Ending_Value_a: 26.05,
+      Purchase_Price_b: 20.49,
+    },
+    {
+      Beginning_Date: "2016-08-01",
+      Ending_Date: "2017-01-31",
+      Period_Beginning_Value: 26.51,
+      Period_Ending_Value_a: 30.34,
+      Purchase_Price_b: 22.54,
+    },
+    {
+      Beginning_Date: "2017-02-01",
+      Ending_Date: "2017-07-31",
+      Period_Beginning_Value: 32.19,
+      Period_Ending_Value_a: 37.18,
+      Purchase_Price_b: 27.36,
+    },
+    {
+      Beginning_Date: "2017-08-01",
+      Ending_Date: "2018-01-31",
+      Period_Beginning_Value: 37.51,
+      Period_Ending_Value_a: 41.86,
+      Purchase_Price_b: 31.89,
+    },
+    {
+      Beginning_Date: "2018-02-01",
+      Ending_Date: "2018-07-31",
+      Period_Beginning_Value: 41.95,
+      Period_Ending_Value_a: 47.57,
+      Purchase_Price_b: 35.65,
+    },
+    {
+      Beginning_Date: "2018-08-01",
+      Ending_Date: "2019-01-31",
+      Period_Beginning_Value: 50.38,
+      Period_Ending_Value_a: 41.61,
+      Purchase_Price_b: 35.37,
+    },
+    {
+      Beginning_Date: "2019-02-01",
+      Ending_Date: "2019-07-31",
+      Period_Beginning_Value: 41.63,
+      Period_Ending_Value_a: 53.26,
+      Purchase_Price_b: 35.39,
+    },
+    {
+      Beginning_Date: "2019-08-01",
+      Ending_Date: "2020-01-31",
+      Period_Beginning_Value: 52.11,
+      Period_Ending_Value_a: 77.38,
+      Purchase_Price_b: 44.29,
+    },
+    {
+      Beginning_Date: "2020-02-01",
+      Ending_Date: "2020-07-31",
+      Period_Beginning_Value: 77.17,
+      Period_Ending_Value_a: 106.26,
+      Purchase_Price_b: 65.59,
+    },
+    {
+      Beginning_Date: "2020-08-01",
+      Ending_Date: "2021-01-31",
+      Period_Beginning_Value: 108.94,
+      Period_Ending_Value_a: 131.96,
+      Purchase_Price_b: 92.6,
+    },
+    {
+      Beginning_Date: "2021-02-01",
+      Ending_Date: "2021-07-31",
+      Period_Beginning_Value: 134.14,
+      Period_Ending_Value_a: 145.86,
+      Purchase_Price_b: 114.02,
+    },
+    {
+      Beginning_Date: "2021-08-01",
+      Ending_Date: "2022-01-31",
+      Period_Beginning_Value: 145.52,
+      Period_Ending_Value_a: 174.78,
+      Purchase_Price_b: 123.69,
+    },
+    {
+      Beginning_Date: "2022-02-01",
+      Ending_Date: "2022-07-31",
+      Period_Beginning_Value: 174.61,
+      Period_Ending_Value_a: 162.51,
+      Purchase_Price_b: 138.13,
+    },
+    {
+      Beginning_Date: "2022-08-01",
+      Ending_Date: "2023-01-31",
+      Period_Beginning_Value: 161.51,
+      Period_Ending_Value_a: 144.29,
+      Purchase_Price_b: 122.65,
+    },
+    {
+      Beginning_Date: "2023-02-01",
+      Ending_Date: "2023-07-31",
+      Period_Beginning_Value: 145.43,
+      Period_Ending_Value_a: 196.45,
+      Purchase_Price_b: 123.62,
+    },
+    {
+      Beginning_Date: "2023-08-01",
+      Ending_Date: "2024-01-31",
+      Period_Beginning_Value: 195.6,
+      Period_Ending_Value_a: 184.4,
+      Purchase_Price_b: 156.74,
+    },
+    {
+      Beginning_Date: "2024-02-01",
+      Ending_Date: "2024-07-31",
+      Period_Beginning_Value: 186.86,
+      Period_Ending_Value_a: 222.08,
+      Purchase_Price_b: 158.83,
+    },
+  ];
+  
+  
 
 // Constants and Types
 const daysOfWeek: DayOfWeek[] = [
@@ -359,12 +376,15 @@ function calculateShiftPay(
 function calculateWeeklyIncome(
   schedule: { day: DayOfWeek; start: number; end: number }[],
   baseRate: number,
-  overtimeThreshold: number
+  overtimeThreshold: number,
+  esppContributionPercent: number,
+  summaryPeriod: 'Weekly' | 'Fortnightly'
 ): {
   totalIncome: number;
   totalHours: number;
   breakdown: { payType: string; hours: number; rate: number; income: number }[];
   daySummary: { day: DayOfWeek; hours: number; salary: number }[];
+  esppData: ESPPCalculatedData[];
 } {
   let totalIncome = 0;
   let totalHours = 0;
@@ -376,6 +396,14 @@ function calculateWeeklyIncome(
     { payType: '200% Premium', hours: 0, rate: 2.0 * baseRate, income: 0 },
   ];
   const daySummary: { day: DayOfWeek; hours: number; salary: number }[] = [];
+  const esppData: {
+    period: string;
+    contribution: number;
+    purchasePrice: number;
+    sharesPurchased: number;
+    investedValue: number;
+    nonInvestedValue: number;
+  }[] = [];
 
   for (const { day, start, end } of schedule) {
     const shiftResult = calculateShiftPay(
@@ -407,9 +435,71 @@ function calculateWeeklyIncome(
     });
   }
 
-  return { totalIncome, totalHours, breakdown, daySummary };
-}
-
+   // ESPP Calculations
+   const calculatedESPPData: ESPPCalculatedData[] = [];
+   let cumulativeESPPContributions = 0;
+   let cumulativeShares = 0;
+   let cumulativeInvestedValue = 0;
+   let cumulativeNonInvestedValue = 0;
+ 
+   // Process each historical ESPP period
+   esppHistoricalData.forEach((historicalPeriod) => {
+     const {
+       Beginning_Date,
+       Ending_Date,
+       Period_Ending_Value_a,
+       Purchase_Price_b
+     } = historicalPeriod;
+ 
+     const period = `${Beginning_Date} - ${Ending_Date}`;
+     let contribution = 0;
+     let purchasePrice = 0;
+     let sharesPurchased = 0;
+ 
+     // Determine if this period is a purchase period
+     const month = new Date(Beginning_Date).getMonth() + 1;
+     const day = new Date(Beginning_Date).getDate();
+     const isPurchasePeriod = (month === 2 && day === 1) || (month === 7 && day === 31);
+ 
+     // Calculate contribution based on summary period
+     const hoursPerPeriod = summaryPeriod === 'Weekly' ? 40 : 80;
+     const salaryPerPeriod = baseRate * hoursPerPeriod;
+     const netSalaryPerPeriod = salaryPerPeriod - calculateTax(salaryPerPeriod, summaryPeriod).taxPerPeriod;
+     contribution = (esppContributionPercent / 100) * netSalaryPerPeriod;
+ 
+     // Add to cumulative contributions
+     cumulativeESPPContributions += contribution;
+     cumulativeNonInvestedValue += contribution;
+ 
+     if (isPurchasePeriod) {
+       // Purchase AAPL stock at 15% discount
+       purchasePrice = Purchase_Price_b * 0.85;
+       sharesPurchased = contribution / purchasePrice;
+       cumulativeShares += sharesPurchased;
+     }
+ 
+     // Calculate invested value based on current period's ending stock price
+     const investedValue = cumulativeShares * Period_Ending_Value_a;
+     cumulativeInvestedValue = investedValue;
+ 
+     calculatedESPPData.push({
+       period,
+       contribution,
+       purchasePrice,
+       sharesPurchased,
+       investedValue: cumulativeInvestedValue,
+       nonInvestedValue: cumulativeNonInvestedValue,
+     });
+   });
+ 
+   return {
+     totalIncome,
+     totalHours,
+     breakdown,
+     daySummary,
+     esppData: calculatedESPPData
+   };
+ }
 // Custom Label for PieChart with Defensive Programming
 const renderCustomizedLabel = ({
   payload,
@@ -439,19 +529,6 @@ const renderCustomizedLabel = ({
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042'];
 const HOURS_WORKED_COLOR = '#8884d8'; // Blue
 const SALARY_EARNED_COLOR = '#82ca9d'; // Green
-
-// Process ESPP data to include cumulativeContribution and investmentValue
-const esppChartData = esppData.map((item, index) => {
-  const cumulativeContribution = esppData
-    .slice(0, index + 1)
-    .reduce((acc, curr) => acc + curr.Purchase_Price_b, 0);
-  const investmentValue = item.Period_Ending_Value_a;
-  return {
-    Ending_Date: item.Ending_Date,
-    cumulativeContribution,
-    investmentValue
-  };
-});
 
 // Payslip Planner Component
 export function PayslipPlannerComponent() {
@@ -498,12 +575,19 @@ export function PayslipPlannerComponent() {
         end: convertTime(endTime)
       }));
 
-    const weeklyData = calculateWeeklyIncome(workSchedule, baseRate, Number(bracket));
+    const weeklyData = calculateWeeklyIncome(
+      workSchedule,
+      baseRate,
+      Number(bracket),
+      esppContribution,
+      summaryPeriod
+    );
     setIncomeData(weeklyData);
 
     // Log the breakdown data for debugging
     console.log('Breakdown Data:', weeklyData.breakdown);
     console.log('Day Summary:', weeklyData.daySummary); // Added for debugging
+    console.log('ESPP Data:', weeklyData.esppData); // Added for debugging
 
     const periodMultiplier = summaryPeriod === 'Weekly' ? 1 : 2;
     const incomePerPeriod = weeklyData.totalIncome * periodMultiplier;
@@ -550,7 +634,7 @@ export function PayslipPlannerComponent() {
 
   return (
     <div className="bg-gradient-to-b from-gray-800 to-gray-600 text-white min-h-screen p-4">
-      <h1 className="text-3xl font-bold mb-6">Payslip Planner</h1>
+      <h1 className="text-3xl font-bold mb-6">Payslip Planning Tool</h1>
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="bg-gray-700 p-1 rounded-lg space-x-2">
           <TabsTrigger 
@@ -697,7 +781,6 @@ export function PayslipPlannerComponent() {
                 ))}
               </CardContent>
             </Card>
-
           </div>
           <Button
             className="mt-6 bg-teal-500 hover:bg-teal-600 transition-colors duration-200"
@@ -881,23 +964,23 @@ export function PayslipPlannerComponent() {
                 </CardHeader>
                 <CardContent>
                   <ResponsiveContainer width="100%" height={300}>
-                    <LineChart data={esppChartData}>
+                    <LineChart data={incomeData.esppData}>
                       <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="Ending_Date" />
+                      <XAxis dataKey="period" />
                       <YAxis />
                       <Tooltip formatter={(value: number) => `$${value.toFixed(2)}`} />
                       <Legend />
                       <Line
                         type="monotone"
-                        dataKey="cumulativeContribution"
+                        dataKey="investedValue"
                         stroke="#8884d8"
-                        name="Cumulative Contributions"
+                        name="Invested Value"
                       />
                       <Line
                         type="monotone"
-                        dataKey="investmentValue"
+                        dataKey="nonInvestedValue"
                         stroke="#82ca9d"
-                        name="Investment Value"
+                        name="Non-Invested Value"
                       />
                     </LineChart>
                   </ResponsiveContainer>
