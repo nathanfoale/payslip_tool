@@ -14,8 +14,8 @@
     },
     "strict": true, // Ensures TypeScript strict mode
     "esModuleInterop": true,
-    "moduleResolution": "node",
-    "jsx": "preserve",
+    "moduleResolution": "bundler",
+    "jsx": "react-jsx",
     "noEmit": true,
     "incremental": true,
     "resolveJsonModule": true,
@@ -39,7 +39,8 @@
     "next-env.d.ts",
     "**/*.ts",
     "**/*.tsx",
-    ".next/types/**/*.ts"
+    ".next/types/**/*.ts",
+    ".next/dev/types/**/*.ts"
   ],
   "exclude": [
     "node_modules"
