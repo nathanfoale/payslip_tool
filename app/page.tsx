@@ -22,6 +22,11 @@ type PaySettings = {
 
 type EsppScenario = {
   offeringPeriod: "feb-jul" | "aug-jan";
+  actualPoolAud: number;
+  convertedPoolUsd: number;
+  discountedPurchasePrice: number;
+  currentAaplPrice: number;
+  currentAudPerUsd: number;
   offeringStartPrice: number;
   purchaseDatePrice: number;
   savingsRate: number;
@@ -133,6 +138,11 @@ const INITIAL_SETTINGS: PaySettings = {
 
 const INITIAL_ESPP_SCENARIO: EsppScenario = {
   offeringPeriod: "feb-jul",
+  actualPoolAud: 0,
+  convertedPoolUsd: 0,
+  discountedPurchasePrice: 0,
+  currentAaplPrice: 0,
+  currentAudPerUsd: 0,
   offeringStartPrice: 0,
   purchaseDatePrice: 0,
   savingsRate: 4.5,
@@ -174,9 +184,20 @@ const currency = new Intl.NumberFormat("en-AU", {
   minimumFractionDigits: 2,
 });
 
+const usdCurrency = new Intl.NumberFormat("en-US", {
+  style: "currency",
+  currency: "USD",
+  minimumFractionDigits: 2,
+});
+
 const decimal = new Intl.NumberFormat("en-AU", {
   minimumFractionDigits: 0,
   maximumFractionDigits: 2,
+});
+
+const shareDecimal = new Intl.NumberFormat("en-AU", {
+  minimumFractionDigits: 0,
+  maximumFractionDigits: 4,
 });
 
 function timeToMinutes(time: string) {
@@ -435,6 +456,31 @@ export default function Home() {
             offeringPeriod:
               parsed.esppScenario.offeringPeriod ??
               INITIAL_ESPP_SCENARIO.offeringPeriod,
+            actualPoolAud: Math.max(
+              0,
+              parsed.esppScenario.actualPoolAud ??
+                INITIAL_ESPP_SCENARIO.actualPoolAud,
+            ),
+            convertedPoolUsd: Math.max(
+              0,
+              parsed.esppScenario.convertedPoolUsd ??
+                INITIAL_ESPP_SCENARIO.convertedPoolUsd,
+            ),
+            discountedPurchasePrice: Math.max(
+              0,
+              parsed.esppScenario.discountedPurchasePrice ??
+                INITIAL_ESPP_SCENARIO.discountedPurchasePrice,
+            ),
+            currentAaplPrice: Math.max(
+              0,
+              parsed.esppScenario.currentAaplPrice ??
+                INITIAL_ESPP_SCENARIO.currentAaplPrice,
+            ),
+            currentAudPerUsd: Math.max(
+              0,
+              parsed.esppScenario.currentAudPerUsd ??
+                INITIAL_ESPP_SCENARIO.currentAudPerUsd,
+            ),
             offeringStartPrice: Math.max(
               0,
               parsed.esppScenario.offeringStartPrice ??
@@ -494,31 +540,57 @@ export default function Home() {
   const offeringContributionCount =
     settings.payCycle === "fortnightly" ? 13 : 26;
   const offeringPeriod = OFFERING_PERIODS[esppScenario.offeringPeriod];
-  const pooledEspp = espp * offeringContributionCount;
+  const estimatedPooledEspp = espp * offeringContributionCount;
+  const pooledEspp =
+    esppScenario.actualPoolAud > 0
+      ? esppScenario.actualPoolAud
+      : estimatedPooledEspp;
+  const contributionPerCycle = pooledEspp / offeringContributionCount;
   const bankValue = futureValueOfContributions(
-    espp,
+    contributionPerCycle,
     offeringContributionCount,
     esppScenario.savingsRate,
     periodsPerYear,
   );
   const bankGrowth = bankValue - pooledEspp;
-  const hasAaplPrices =
+  const hasLookbackPrices =
     esppScenario.offeringStartPrice > 0 && esppScenario.purchaseDatePrice > 0;
-  const lookbackPrice = hasAaplPrices
+  const lookbackPrice = hasLookbackPrices
     ? Math.min(
         esppScenario.offeringStartPrice,
         esppScenario.purchaseDatePrice,
       )
     : 0;
-  const discountedPurchasePrice = lookbackPrice * 0.85;
-  const aaplValue =
-    discountedPurchasePrice > 0
-      ? pooledEspp *
-        (esppScenario.purchaseDatePrice / discountedPurchasePrice)
+  const calculatedPurchasePrice = lookbackPrice * 0.85;
+  const discountedPurchasePrice =
+    esppScenario.discountedPurchasePrice > 0
+      ? esppScenario.discountedPurchasePrice
+      : calculatedPurchasePrice;
+  const hasShareValue =
+    esppScenario.convertedPoolUsd > 0 &&
+    discountedPurchasePrice > 0 &&
+    esppScenario.currentAaplPrice > 0;
+  const estimatedShares = hasShareValue
+    ? esppScenario.convertedPoolUsd / discountedPurchasePrice
+    : 0;
+  const currentAaplValueUsd = estimatedShares * esppScenario.currentAaplPrice;
+  const impliedAudPerUsd =
+    esppScenario.convertedPoolUsd > 0
+      ? pooledEspp / esppScenario.convertedPoolUsd
       : 0;
-  const aaplGrowth = aaplValue - pooledEspp;
-  const aaplVsBank = aaplValue - bankValue;
-  const comparisonMax = Math.max(pooledEspp, bankValue, aaplValue, 1);
+  const valuationAudPerUsd =
+    esppScenario.currentAudPerUsd > 0
+      ? esppScenario.currentAudPerUsd
+      : impliedAudPerUsd;
+  const currentAaplValueAud = currentAaplValueUsd * valuationAudPerUsd;
+  const aaplGrowth = currentAaplValueAud - pooledEspp;
+  const aaplVsBank = currentAaplValueAud - bankValue;
+  const comparisonMax = Math.max(
+    pooledEspp,
+    bankValue,
+    currentAaplValueAud,
+    1,
+  );
   const superEstimate = grossPay * 0.12;
   const effectiveRate = periodHours > 0 ? grossPay / periodHours : 0;
   const contract = CONTRACT_RANGES[settings.contractRange];
@@ -589,8 +661,11 @@ export default function Home() {
       `Six-month ESPP pool (${offeringPeriod.label}): ${currency.format(pooledEspp)}`,
       `Savings comparison: ${currency.format(bankValue)}`,
     ];
-    if (hasAaplPrices) {
-      lines.push(`AAPL lookback value: ${currency.format(aaplValue)}`);
+    if (hasShareValue) {
+      lines.push(
+        `Estimated shares: ${shareDecimal.format(estimatedShares)}`,
+        `Current AAPL value: ${usdCurrency.format(currentAaplValueUsd)} / ${currency.format(currentAaplValueAud)}`,
+      );
     }
 
     try {
@@ -1206,49 +1281,74 @@ export default function Home() {
 
           <div className="scenario-fields">
             <label className="scenario-field">
-              <span>AAPL at offering start</span>
+              <span>Actual pooled contribution</span>
               <div className="stock-input">
-                <span>US$</span>
+                <span>A$</span>
                 <input
-                  aria-label="AAPL price at the start of the offering in US dollars"
+                  aria-label="Actual ESPP contribution pooled in Australian dollars"
                   inputMode="decimal"
                   min="0"
                   step="0.01"
-                  placeholder="Enter price"
+                  placeholder={decimal.format(estimatedPooledEspp)}
                   type="number"
-                  value={esppScenario.offeringStartPrice || ""}
+                  value={esppScenario.actualPoolAud || ""}
                   onChange={(event) =>
                     setEsppScenario((current) => ({
                       ...current,
-                      offeringStartPrice: Math.max(
-                        0,
-                        Number(event.target.value),
-                      ),
+                      actualPoolAud: Math.max(0, Number(event.target.value)),
                     }))
                   }
                 />
               </div>
               <small>
-                Use the plan’s {offeringPeriod.startDate} reference price.
+                Leave blank to use the {currency.format(estimatedPooledEspp)}{" "}
+                estimate from your pay plan.
               </small>
             </label>
 
             <label className="scenario-field">
-              <span>AAPL at purchase date</span>
+              <span>Converted contribution</span>
               <div className="stock-input">
                 <span>US$</span>
                 <input
-                  aria-label="AAPL price at the end of the offering in US dollars"
+                  aria-label="ESPP contribution available to purchase shares in US dollars"
                   inputMode="decimal"
                   min="0"
                   step="0.01"
-                  placeholder="Enter price"
+                  placeholder="e.g. 2376"
                   type="number"
-                  value={esppScenario.purchaseDatePrice || ""}
+                  value={esppScenario.convertedPoolUsd || ""}
                   onChange={(event) =>
                     setEsppScenario((current) => ({
                       ...current,
-                      purchaseDatePrice: Math.max(
+                      convertedPoolUsd: Math.max(0, Number(event.target.value)),
+                    }))
+                  }
+                />
+              </div>
+              <small>Use the USD amount available after payroll conversion.</small>
+            </label>
+
+            <label className="scenario-field">
+              <span>Discounted purchase price</span>
+              <div className="stock-input">
+                <span>US$</span>
+                <input
+                  aria-label="Discounted AAPL purchase price in US dollars"
+                  inputMode="decimal"
+                  min="0"
+                  step="0.01"
+                  placeholder={
+                    calculatedPurchasePrice > 0
+                      ? decimal.format(calculatedPurchasePrice)
+                      : "e.g. 229.50"
+                  }
+                  type="number"
+                  value={esppScenario.discountedPurchasePrice || ""}
+                  onChange={(event) =>
+                    setEsppScenario((current) => ({
+                      ...current,
+                      discountedPurchasePrice: Math.max(
                         0,
                         Number(event.target.value),
                       ),
@@ -1257,7 +1357,67 @@ export default function Home() {
                 />
               </div>
               <small>
-                Use the plan’s {offeringPeriod.purchaseDate} reference price.
+                Enter the confirmed price after the 15% discount, or calculate
+                it below.
+              </small>
+            </label>
+
+            <label className="scenario-field">
+              <span>Current AAPL price</span>
+              <div className="stock-input">
+                <span>US$</span>
+                <input
+                  aria-label="Current AAPL share price in US dollars"
+                  inputMode="decimal"
+                  min="0"
+                  step="0.01"
+                  placeholder="e.g. 333.02"
+                  type="number"
+                  value={esppScenario.currentAaplPrice || ""}
+                  onChange={(event) =>
+                    setEsppScenario((current) => ({
+                      ...current,
+                      currentAaplPrice: Math.max(
+                        0,
+                        Number(event.target.value),
+                      ),
+                    }))
+                  }
+                />
+              </div>
+              <small>Enter the latest market price when comparing values.</small>
+            </label>
+
+            <label className="scenario-field">
+              <span>Current AUD per US$</span>
+              <div className="stock-input">
+                <span>A$</span>
+                <input
+                  aria-label="Current Australian dollars per US dollar"
+                  inputMode="decimal"
+                  min="0"
+                  step="0.0001"
+                  placeholder={
+                    impliedAudPerUsd > 0
+                      ? decimal.format(impliedAudPerUsd)
+                      : "e.g. 1.43"
+                  }
+                  type="number"
+                  value={esppScenario.currentAudPerUsd || ""}
+                  onChange={(event) =>
+                    setEsppScenario((current) => ({
+                      ...current,
+                      currentAudPerUsd: Math.max(
+                        0,
+                        Number(event.target.value),
+                      ),
+                    }))
+                  }
+                />
+              </div>
+              <small>
+                Leave blank to reuse the exchange rate implied by the AUD and
+                USD pool.
               </small>
             </label>
 
@@ -1280,21 +1440,104 @@ export default function Home() {
                 />
                 <span>% p.a.</span>
               </div>
-              <small>Interest compounds across each deposit.</small>
+              <small>Interest compounds across evenly timed deposits.</small>
             </label>
           </div>
 
+          <details className="lookback-calculator">
+            <summary>Calculate the 15% discounted purchase price</summary>
+            <p>
+              If you do not know the final purchase price, enter the AAPL prices
+              at the beginning and end of the selected offering. The lower
+              price receives the 15% discount.
+            </p>
+            <div className="lookback-fields">
+              <label className="scenario-field">
+                <span>AAPL at offering start</span>
+                <div className="stock-input">
+                  <span>US$</span>
+                  <input
+                    aria-label="AAPL price at the start of the offering in US dollars"
+                    inputMode="decimal"
+                    min="0"
+                    step="0.01"
+                    placeholder="Enter price"
+                    type="number"
+                    value={esppScenario.offeringStartPrice || ""}
+                    onChange={(event) =>
+                      setEsppScenario((current) => ({
+                        ...current,
+                        offeringStartPrice: Math.max(
+                          0,
+                          Number(event.target.value),
+                        ),
+                      }))
+                    }
+                  />
+                </div>
+                <small>
+                  Plan reference price for {offeringPeriod.startDate}.
+                </small>
+              </label>
+
+              <label className="scenario-field">
+                <span>AAPL at purchase date</span>
+                <div className="stock-input">
+                  <span>US$</span>
+                  <input
+                    aria-label="AAPL price at the end of the offering in US dollars"
+                    inputMode="decimal"
+                    min="0"
+                    step="0.01"
+                    placeholder="Enter price"
+                    type="number"
+                    value={esppScenario.purchaseDatePrice || ""}
+                    onChange={(event) =>
+                      setEsppScenario((current) => ({
+                        ...current,
+                        purchaseDatePrice: Math.max(
+                          0,
+                          Number(event.target.value),
+                        ),
+                      }))
+                    }
+                  />
+                </div>
+                <small>
+                  Plan reference price for {offeringPeriod.purchaseDate}.
+                </small>
+              </label>
+            </div>
+            {calculatedPurchasePrice > 0 && (
+              <div className="lookback-result">
+                <span>
+                  85% of the lower {usdCurrency.format(lookbackPrice)} reference
+                  price
+                </span>
+                <strong>{usdCurrency.format(calculatedPurchasePrice)}</strong>
+              </div>
+            )}
+          </details>
+
           <div className="pool-summary">
             <div>
-              <span>From each {periodLabel.toLowerCase()} pay</span>
-              <strong>{currency.format(espp)}</strong>
+              <span>
+                {esppScenario.actualPoolAud > 0
+                  ? "Actual contribution pool"
+                  : "Estimated contribution pool"}
+              </span>
+              <strong>{currency.format(pooledEspp)}</strong>
             </div>
             <span className="pool-arrow" aria-hidden="true">
               →
             </span>
             <div>
-              <span>Pooled by {offeringPeriod.purchaseDate}</span>
-              <strong>{currency.format(pooledEspp)}</strong>
+              <span>Converted for the share purchase</span>
+              <strong>
+                {esppScenario.convertedPoolUsd > 0
+                  ? usdCurrency.format(esppScenario.convertedPoolUsd)
+                  : "Enter USD amount"}
+              </strong>
             </div>
           </div>
 
@@ -1329,20 +1572,30 @@ export default function Home() {
                 <div>
                   <p>Buy AAPL through ESPP</p>
                   <h3>
-                    {hasAaplPrices ? currency.format(aaplValue) : "Enter prices"}
+                    {hasShareValue
+                      ? currency.format(currentAaplValueAud)
+                      : "Enter share details"}
                   </h3>
+                  {hasShareValue && (
+                    <span className="outcome-subvalue">
+                      {usdCurrency.format(currentAaplValueUsd)} current value
+                    </span>
+                  )}
                 </div>
               </div>
-              {hasAaplPrices ? (
+              {hasShareValue ? (
                 <dl>
                   <div>
-                    <dt>
-                      Discounted buy price
-                      <span>
-                        85% of US{currency.format(lookbackPrice)}
-                      </span>
-                    </dt>
-                    <dd>US{currency.format(discountedPurchasePrice)}</dd>
+                    <dt>Estimated shares purchased</dt>
+                    <dd>{shareDecimal.format(estimatedShares)}</dd>
+                  </div>
+                  <div>
+                    <dt>Discounted purchase price</dt>
+                    <dd>{usdCurrency.format(discountedPurchasePrice)}</dd>
+                  </div>
+                  <div>
+                    <dt>Current AAPL price</dt>
+                    <dd>{usdCurrency.format(esppScenario.currentAaplPrice)}</dd>
                   </div>
                   <div>
                     <dt>Value above contributions</dt>
@@ -1354,12 +1607,37 @@ export default function Home() {
                 </dl>
               ) : (
                 <p className="scenario-empty">
-                  Add the start and end AAPL prices to calculate the discounted
-                  purchase and end value.
+                  Add the converted USD pool, discounted purchase price and
+                  current AAPL price to calculate the shares and their current
+                  value.
                 </p>
               )}
             </article>
           </div>
+
+          {hasShareValue && (
+            <div className="share-math" aria-label="ESPP share calculation">
+              <div>
+                <span>Shares purchased</span>
+                <strong>
+                  {usdCurrency.format(esppScenario.convertedPoolUsd)} ÷{" "}
+                  {usdCurrency.format(discountedPurchasePrice)} ={" "}
+                  {shareDecimal.format(estimatedShares)}
+                </strong>
+              </div>
+              <span className="pool-arrow" aria-hidden="true">
+                →
+              </span>
+              <div>
+                <span>Current share value</span>
+                <strong>
+                  {shareDecimal.format(estimatedShares)} ×{" "}
+                  {usdCurrency.format(esppScenario.currentAaplPrice)} ={" "}
+                  {usdCurrency.format(currentAaplValueUsd)}
+                </strong>
+              </div>
+            </div>
+          )}
 
           <div className="comparison-chart" aria-label="ESPP value comparison">
             <div className="comparison-row">
@@ -1378,19 +1656,19 @@ export default function Home() {
                 <span
                   className="comparison-fill stock-fill"
                   style={{
-                    width: hasAaplPrices
-                      ? `${(aaplValue / comparisonMax) * 100}%`
+                    width: hasShareValue
+                      ? `${(currentAaplValueAud / comparisonMax) * 100}%`
                       : "0%",
                   }}
                 />
               </div>
               <strong>
-                {hasAaplPrices ? currency.format(aaplValue) : "—"}
+                {hasShareValue ? currency.format(currentAaplValueAud) : "—"}
               </strong>
             </div>
           </div>
 
-          {hasAaplPrices && (
+          {hasShareValue && (
             <div
               className={`comparison-verdict ${aaplVsBank >= 0 ? "stock-leads" : "bank-leads"}`}
               aria-live="polite"
@@ -1400,22 +1678,21 @@ export default function Home() {
                 {currency.format(Math.abs(aaplVsBank))}
               </strong>
               <span>
-                {esppScenario.offeringStartPrice <=
-                esppScenario.purchaseDatePrice
-                  ? "The offering-start price is lower, so the 15% discount is applied to it."
-                  : "The purchase-date price is lower, so the 15% discount is applied to it."}
+                The comparison uses {currency.format(valuationAudPerUsd)} per
+                US$ to show both outcomes in Australian dollars.
               </span>
             </div>
           )}
 
           <p className="espp-footnote">
-            Illustrative pre-tax comparison. It assumes the same pay every
-            cycle, deposits at the end of each pay cycle, and values the shares
-            at the {offeringPeriod.purchaseDate} price. AAPL prices are in USD;
-            the stock result is an AUD-equivalent ratio that assumes the same
-            exchange rate when buying and valuing the shares. It excludes FX
-            movement, tax, fees, dividends and share-rounding rules. Confirm
-            the dates and rules in your plan documents.
+            Illustrative pre-tax comparison. Savings interest assumes the pool
+            was deposited evenly across the offering period. The ESPP value is
+            the estimated share count multiplied by the current AAPL price,
+            then converted to AUD using the current exchange rate above. If
+            that rate is blank, the implied rate from the AUD and USD pool is
+            reused. It excludes tax, fees, dividends and whole-share or refund
+            rules. Confirm final payroll, FX and purchase figures in your plan
+            documents.
           </p>
         </div>
       </section>
